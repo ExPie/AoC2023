@@ -11,7 +11,7 @@ public class E01 {
 
     public static void main(String[] args) throws IOException {
 
-        File input = new File("./input/01_1.txt");
+        File input = new File("./input/1.txt");
         BufferedReader reader = new BufferedReader(new FileReader(input));
 
         String line = reader.readLine();
