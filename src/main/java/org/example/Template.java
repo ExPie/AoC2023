@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class E06 {
+public class Template {
 
     public static void main(String[] args) {
         parseInput();

@@ -16,7 +16,8 @@ public class E05 {
     public static void main(String[] args) {
         parseInput();
         part1();
-        part2();
+        //part2();
+        part2Efficient();
     }
 
     private static void part1() {
@@ -29,6 +30,34 @@ public class E05 {
                 min = seed;
             }
         }
+        System.out.println(min);
+    }
+
+    private static void part2Efficient() {
+        List<long[]> mappedIntervals = new LinkedList<>();
+
+        for(int i = 0; i < seeds.size(); i += 2) {
+            mappedIntervals.add(new long[]{seeds.get(i), seeds.get(i) + seeds.get(i + 1)});
+        }
+
+        for(Mapping mapping : maps) {
+            List<long[]> mapped = new LinkedList<>();
+
+            for(long[] interval : mappedIntervals) {
+                List<long[]> m = mapping.mapInterval(interval);
+                mapped.addAll(m);
+            }
+
+            mappedIntervals = mapped;
+        }
+
+        long min = -1;
+        for(long[] interval : mappedIntervals) {
+            if(min < 0 || interval[0] < min) {
+                min = interval[0];
+            }
+        }
+
         System.out.println(min);
     }
 
@@ -148,6 +177,11 @@ public class E05 {
         }
 
         public long map(long input) {
+
+            if(input < ranges.get(0)[1]) {
+                return input;
+            }
+
             int i;
             for(i = 0; i < ranges.size(); i++) {
                 if(i == ranges.size() - 1 || input >= ranges.get(i)[1] && input < ranges.get(i+1)[1]) {
@@ -162,6 +196,61 @@ public class E05 {
                 return input;
             }
 
+            long diff = input - src;
+            return dst + diff;
+        }
+
+        public List<long[]> mapInterval(long[] interval) {
+            List<long[]> mappings = new LinkedList<>();
+
+            long intStart = interval[0];
+            long intEnd = interval[1];
+
+            for(long[] range : ranges) {
+                long ruleStart = range[1];
+                long ruleEnd = range[1] + range[2];
+
+                if(intStart < ruleStart) {
+                    if(intEnd <= ruleStart) {
+                        continue;
+                    } else if(intEnd <= ruleEnd) {
+                        long map1 = map(ruleStart, range[1], range[0], range[2]);
+                        long map2 = map(intEnd, range[1], range[0], range[2]);
+                        mappings.add(new long[]{intStart, ruleStart});
+                        mappings.add(new long[]{map1, map2});
+                        break;
+                    } else { // intEnd > ruleEnd
+                        long map1 = map(ruleStart, range[1], range[0], range[2]);
+                        long map2 = map(ruleEnd, range[1], range[0], range[2]);
+                        mappings.add(new long[]{intStart, ruleStart});
+                        mappings.add(new long[]{map1, map2});
+                        mappings.addAll(mapInterval(new long[]{ruleEnd, intEnd}));
+                        break;
+                    }
+                } else if (intStart < ruleEnd) { // intStart >= ruleStart
+                    if(intEnd <= ruleEnd) {
+                        long map1 = map(intStart, range[1], range[0], range[2]);
+                        long map2 = map(intEnd, range[1], range[0], range[2]);
+                        mappings.add(new long[]{map1, map2});
+                        break;
+                    } else { // intEnd > ruleEnd
+                        long map1 = map(intStart, range[1], range[0], range[2]);
+                        long map2 = map(ruleEnd, range[1], range[0], range[2]);
+                        mappings.add(new long[]{map1, map2});
+                        mappings.addAll(mapInterval(new long[]{ruleEnd, intEnd}));
+                        break;
+                    }
+                } // else intStart >= ruleEnd -> continue;
+            }
+
+            if(mappings.isEmpty()) {
+                mappings.add(interval);
+            }
+
+            return mappings;
+        }
+
+        private long map(long input, long src, long dst, long len) {
             long diff = input - src;
             return dst + diff;
         }
